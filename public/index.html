@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Engee Prompt GUI</title>
+    <style>
+      :root {
+        --bg: #0f172a;
+        --panel: #111827;
+        --ink: #e5e7eb;
+        --muted: #9ca3af;
+        --accent: #38bdf8;
+        --border: #1f2937;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        font-family: "Segoe UI", Arial, sans-serif;
+        background: radial-gradient(circle at top, #0b1222 0%, var(--bg) 45%, #05070e 100%);
+        color: var(--ink);
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 24px;
+      }
+
+      .app {
+        width: min(960px, 100%);
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 18px;
+        padding: 28px;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.45);
+      }
+
+      h1 {
+        margin: 0 0 12px 0;
+        font-size: 24px;
+        font-weight: 600;
+        letter-spacing: 0.3px;
+      }
+
+      p {
+        margin: 0 0 24px 0;
+        color: var(--muted);
+      }
+
+      label {
+        display: block;
+        margin-bottom: 8px;
+        font-size: 14px;
+        color: var(--muted);
+      }
+
+      textarea {
+        width: 100%;
+        min-height: 140px;
+        background: #0b1120;
+        color: var(--ink);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 12px;
+        font-size: 14px;
+        line-height: 1.4;
+        resize: vertical;
+      }
+
+      .row {
+        display: flex;
+        gap: 16px;
+        flex-wrap: wrap;
+        margin-top: 16px;
+      }
+
+      .row > div {
+        flex: 1 1 360px;
+      }
+
+      button {
+        margin-top: 16px;
+        background: var(--accent);
+        color: #03131a;
+        border: none;
+        border-radius: 10px;
+        padding: 10px 16px;
+        font-weight: 600;
+        cursor: pointer;
+      }
+
+      button:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+      }
+
+      .status {
+        margin-top: 8px;
+        font-size: 13px;
+        color: var(--muted);
+        min-height: 18px;
+      }
+
+      pre {
+        background: #0b1120;
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 12px;
+        min-height: 180px;
+        white-space: pre-wrap;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="app">
+      <h1>Prompt To Script</h1>
+      <p>Type a prompt, send it to <code>/script/generate</code>, and show the returned script.</p>
+
+      <div class="row">
+        <div>
+          <label for="prompt">Prompt</label>
+          <textarea id="prompt" placeholder="Describe what you want the script to do..."></textarea>
+          <button id="send">Generate</button>
+          <div id="status" class="status"></div>
+        </div>
+        <div>
+          <label for="output">Script</label>
+          <pre id="output"></pre>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const button = document.getElementById("send");
+      const status = document.getElementById("status");
+      const output = document.getElementById("output");
+      const promptField = document.getElementById("prompt");
+
+      async function sendPrompt() {
+        const prompt = promptField.value.trim();
+        if (!prompt) {
+          status.textContent = "Please enter a prompt.";
+          output.textContent = "";
+          return;
+        }
+
+        button.disabled = true;
+        status.textContent = "Sending...";
+        output.textContent = "";
+
+        try {
+          const response = await fetch("/script/generate", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ prompt }),
+          });
+
+          if (!response.ok) {
+            throw new Error("HTTP " + response.status);
+          }
+
+          const data = await response.json();
+          output.textContent = data.script ?? "";
+          status.textContent = "Done.";
+        } catch (err) {
+          status.textContent = "Error: " + err.message;
+        } finally {
+          button.disabled = false;
+        }
+      }
+
+      button.addEventListener("click", sendPrompt);
+    </script>
+  </body>
+</html>
