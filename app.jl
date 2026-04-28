@@ -52,7 +52,7 @@ function call_upstream(prompt::AbstractString)
 end
 
 route("/") do
-    html(read_index())
+    html(read_index(), forceparse = false, noparse = true)
 end
 
 route("/script/generate", method = POST) do
@@ -76,4 +76,4 @@ Genie.config.run_as_server = true
 Genie.config.server_port = parse(Int, get(ENV, "PORT", "8000"))
 Genie.config.server_host = get(ENV, "HOST", "127.0.0.1")
 
-Genie.up()
+Genie.up(async = false)
