@@ -37,14 +37,14 @@ end
 
 function call_upstream(prompt::AbstractString)
     if isempty(strip(UPSTREAM_URL))
-        return "DEMO MODE: no SCRIPT_API_URL set.\n\n" * prompt
+        return "Request URL not found, check SCRIPT_API_URL environment variable"
     end
 
     body = JSON3.write(Dict("prompt" => prompt))
     resp = HTTP.request("POST", UPSTREAM_URL, ["Content-Type" => "application/json"], body)
 
     if resp.status < 200 || resp.status >= 300
-        return "UPSTREAM ERROR: HTTP $(resp.status)"
+        return "Request error with HTTP status: $(resp.status)"
     end
 
     data = JSON3.read(String(resp.body), Dict{String, Any})
@@ -66,7 +66,7 @@ route("/script/generate", method = POST) do
     script = try
         call_upstream(prompt)
     catch e
-        "ERROR: " * sprint(showerror, e)
+        "Error occurred while sending the request.\n\nError: $(sprint(showerror, e))"
     end
 
     json(Dict("script" => script))
